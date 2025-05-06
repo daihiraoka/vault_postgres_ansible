@@ -1,2 +1,3 @@
 vault_root_token: root
 postgres_password: your_strong_password
+name: myapp
