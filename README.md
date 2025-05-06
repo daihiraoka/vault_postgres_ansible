@@ -3,92 +3,76 @@
 このプロジェクトは、**HashiCorp VaultとPostgreSQLの連携環境をAnsibleで自動構築**するためのPlaybookです。
 HashiCorp VaultのDatabase Secrets Engineを使って、PostgreSQLに一時的なユーザーを発行・管理できます。
 
----
+## 機能概要
 
-## このPlaybookでできること
+* Vault のインストールと設定（dev モード）
+* PostgreSQL のインストールと設定（ローカル）
+* Vault への PostgreSQL データベースエンジンの有効化
+* Vault による動的ユーザーのロール作成
+* 一時ユーザーの取得・TTL 更新・削除デモスクリプト付き
 
-* Vaultのインストール（公式リポジトリ利用）
-* PostgreSQL 14のローカルインストールと初期設定
-* VaultでのDatabaseエンジン有効化とPostgreSQLプラグイン設定
-* 一時的なDBユーザー（TTL付き）の発行・削除の自動化
+## 前提ツール
 
----
+以下は ansible 実行時に自動でインストールされます：
 
-## 対応環境
-
-* Ubuntu 22.04 LTS（それ以外は動作未確認）
-* Ansible 2.10以上（推奨: `ansible-playbook --version`で確認）
-
----
-
-## 事前に必要なツール
-
-以下はAnsible Playbookが自動でインストールします：
-
+* curl
+* jq
+* gnupg
 * Vault CLI
-* PostgreSQL（ローカル）
-* curl / jq / gnupg などのユーティリティ
+* PostgreSQL（ローカルインストール）
 
-手動で必要なのは以下です：
+以下は事前に用意しておく必要があります：
 
-* Ansible
+* Ansible（バージョン 2.10 以上推奨）
 
-  ```bash
-  sudo apt update && sudo apt install -y ansible
-  ```
+## 使い方
 
----
+### 1. リポジトリのクローン
 
-## 利用方法
+```bash
+git clone https://github.com/daihiraoka/vault_postgres_ansible.git
+cd vault_postgres_ansible
+```
 
-1. Playbookを実行します。
+### 2. Ansible Playbook の実行
 
-   ```bash
-   ansible-playbook -i inventory.yml site.yml
-   ```
+以下のコマンドで自動構成を実行します：
 
-   初回実行時、Vaultが開発モードで起動し、PostgreSQLも自動で起動されます。
+```bash
+ansible-playbook -i inventory.ini site.yml
+```
 
-2. 一時ユーザーの発行・確認は以下のスクリプトで行えます：
+構成完了後、Vault と PostgreSQL が起動し、Vault による動的クレデンシャル発行が可能になります。
 
-   ```bash
-   bash vault_postgres_ttl_demo.sh
-   ```
+### 3. 動的クレデンシャルの動作確認（任意）
 
-   このスクリプトは：
+`shell/vault_postgres_ttl_demo.sh` を実行することで、以下の動作を確認できます：
 
-   * Vaultから一時ユーザーを発行し
-   * PostgreSQLに接続できることを確認し
-   * TTLを延長し
-   * 最後にそのユーザーを削除します
+* Vault にロールを作成
+* 一時ユーザーを取得
+* PostgreSQL 接続確認
+* TTL の延長
+* ユーザーの削除（lease revoke）
 
----
+```bash
+bash shell/vault_postgres_ttl_demo.sh
+```
 
-## よくあるエラーと対処
+## ディレクトリ構成
 
-* **Vault関連のAPIエラー（https エラー）**
-  → Vault dev モードでは `http://` でアクセスしてください。
-
-* **変数が未定義で失敗する**
-  → `group_vars/all.yml` に以下の3つの変数を定義してください：
-
-  ```yaml
-  vault_root_token: root
-  postgres_password: your_strong_password
-  name: myapp
-  ```
-
----
-
-## 注意点
-
-* このPlaybookは開発・検証用途向けです。
-* Vaultは `-dev` モードで実行されており、再起動で状態がリセットされます。
-* 本番環境ではTLSや永続ストレージなどの設定が必要です。
-
----
-
-## ライセンス
-
-MIT License
+```
+.
+├── README.md
+├── group_vars/
+│   └── all.yml             # 変数定義（Vault トークン、DB パスワードなど）
+├── inventory.ini          # localhost 用インベントリ
+├── roles/                 # 各構成ロール
+│   ├── install_packages/
+│   ├── install_vault/
+│   ├── install_postgresql/
+│   └── setup_vault_database_engine/
+├── shell/
+│   └── vault_postgres_ttl_demo.sh  # 検証用シェルスクリプト
+└── site.yml               # メイン Playbook
+```
 
