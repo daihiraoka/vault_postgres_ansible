@@ -1,0 +1,9 @@
+---
+- name: 必要なパッケージをインストール
+  apt:
+    name:
+      - curl
+      - gnupg
+      - jq
+    state: present
+    update_cache: true

@@ -1,0 +1,12 @@
+---
+- name: Vault + PostgreSQL 自動構成
+  hosts: localhost
+  become: true
+  vars_files:
+    - group_vars/all.yml
+
+  roles:
+    - role: install_packages
+    - role: install_vault
+    - role: install_postgresql
+    - role: setup_vault_database_engine

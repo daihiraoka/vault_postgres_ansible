@@ -1,0 +1,11 @@
+---
+- name: PostgreSQLをインストール
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+    state: present
+    update_cache: true
+
+- name: postgresユーザーにパスワードを設定
+  shell: sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '{{ postgres_password }}';"

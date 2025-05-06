@@ -1,0 +1,18 @@
+---
+- name: VaultのDatabaseエンジンを有効化
+  shell: vault secrets enable database || true
+
+- name: VaultにPostgreSQL接続設定を登録
+  shell: >
+    vault write database/config/postgres
+    plugin_name=postgresql-database-plugin
+    allowed_roles=myapp
+    connection_url="postgresql://postgres:{{ postgres_password }}@127.0.0.1:5432/postgres?sslmode=disable"
+
+- name: VaultにRoleを作成
+  shell: >
+    vault write database/roles/myapp
+    db_name=postgres
+    creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';"
+    default_ttl="60s"
+    max_ttl="5m"
