@@ -1,20 +1,32 @@
 ---
-- name: VaultのDatabaseエンジンを有効化
-  shell: vault secrets enable database || true
+- name: database secrets engine が既に有効か確認
+  command: vault secrets list -format=json
+  register: vault_secrets_list
+  changed_when: false
+  environment:
+    VAULT_ADDR: "http://127.0.0.1:8200"
+
+- name: database secrets engine が未設定なら有効化
+  command: vault secrets enable database
+  when: "'database/' not in vault_secrets_list.stdout"
+  environment:
+    VAULT_ADDR: "http://127.0.0.1:8200"
 
 - name: VaultにPostgreSQL接続設定を登録
   command: >
     vault write database/config/postgres
     plugin_name=postgresql-database-plugin
-    allowed_roles=myapp
-    connection_url="postgresql://postgres:{{postgres_password}}@127.0.0.1:5432/postgres?sslmode=disable"
+    allowed_roles={{ name }}
+    connection_url="postgresql://postgres:{{ postgres_password }}@127.0.0.1:5432/postgres?sslmode=disable"
   environment:
     VAULT_ADDR: "http://127.0.0.1:8200"
 
 - name: VaultにRoleを作成
-  shell: >
-    VAULT_ADDR=http://127.0.0.1:8200 vault write database/roles/{{ name }}
+  command: >
+    vault write database/roles/{{ name }}
     db_name=postgres
-    creation_statements="CREATE ROLE \"{{ name }}\" WITH LOGIN PASSWORD '{{ postgres_password }}' VALID UNTIL '1h';"
-    default_ttl="60s"
-    max_ttl="5m"
+    creation_statements=CREATE ROLE \"{{ name }}\" WITH LOGIN PASSWORD '{{ postgres_password }}' VALID UNTIL '1h';
+    default_ttl=60s
+    max_ttl=5m
+  environment:
+    VAULT_ADDR: "http://127.0.0.1:8200"
