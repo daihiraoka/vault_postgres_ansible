@@ -1,11 +1,22 @@
 ---
 - name: PostgreSQLをインストール
+  become: true
   apt:
     name:
       - postgresql
       - postgresql-contrib
     state: present
-    update_cache: true
+    update_cache: yes
 
-- name: postgresユーザーにパスワードを設定
+- name: PostgreSQL サーバーを起動
+  become: true
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: postgres ユーザーにパスワードを設定
+  become: true
   shell: sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD '{{ postgres_password }}';"
+  args:
+    chdir: /tmp
