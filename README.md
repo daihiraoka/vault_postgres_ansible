@@ -1,91 +1,94 @@
-# HashiCorp Vault + PostgreSQL Dynamic Credentials 自動構成（Ansible）
+# HashiCorp Vault + PostgreSQL Dynamic Credentials 自動構成 Ansible Playbook
 
-このリポジトリは、HashiCorp Vault と PostgreSQL を連携させて、動的にユーザー認証情報を発行・管理する構成を Ansible で自動化するものです。
+このプロジェクトは、**HashiCorp VaultとPostgreSQLの連携環境をAnsibleで自動構築**するためのPlaybookです。
+HashiCorp VaultのDatabase Secrets Engineを使って、PostgreSQLに一時的なユーザーを発行・管理できます。
 
-## セットアップ手順
+---
 
-### 前提ツール
+## このPlaybookでできること
 
-次のツールがインストールされていることを前提とします。
+* Vaultのインストール（公式リポジトリ利用）
+* PostgreSQL 14のローカルインストールと初期設定
+* VaultでのDatabaseエンジン有効化とPostgreSQLプラグイン設定
+* 一時的なDBユーザー（TTL付き）の発行・削除の自動化
 
-* Ansible 2.10 以上
+---
+
+## 対応環境
+
+* Ubuntu 22.04 LTS（それ以外は動作未確認）
+* Ansible 2.10以上（推奨: `ansible-playbook --version`で確認）
+
+---
+
+## 事前に必要なツール
+
+以下はAnsible Playbookが自動でインストールします：
+
 * Vault CLI
-* PostgreSQL（ローカルインストール）
-* curl, jq, gnupg などの基本ユーティリティ
+* PostgreSQL（ローカル）
+* curl / jq / gnupg などのユーティリティ
 
-### 実行方法
+手動で必要なのは以下です：
 
-以下のコマンドで Vault と PostgreSQL のインストールおよび構成を行います。
+* Ansible
 
-```
-ansible-playbook -i inventory.yml site.yml
-```
+  ```bash
+  sudo apt update && sudo apt install -y ansible
+  ```
 
-## Playbook 構成
+---
 
-### roles/install\_packages/
+## 利用方法
 
-基本的なユーティリティパッケージ（curl, gnupg, jq）のインストールを行います。
+1. Playbookを実行します。
 
-### roles/install\_vault/
+   ```bash
+   ansible-playbook -i inventory.yml site.yml
+   ```
 
-* Vault GPGキーの登録
-* Vault のリポジトリ追加とインストール
-* 開発モードでの Vault 起動
-* VAULT\_ADDR 環境変数の設定
+   初回実行時、Vaultが開発モードで起動し、PostgreSQLも自動で起動されます。
 
-### roles/install\_postgresql/
+2. 一時ユーザーの発行・確認は以下のスクリプトで行えます：
 
-* PostgreSQL と postgresql-contrib のインストール
-* postgres ユーザーの初期パスワード設定
-* PostgreSQL サービスの起動
+   ```bash
+   bash vault_postgres_ttl_demo.sh
+   ```
 
-### roles/setup\_vault\_database\_engine/
+   このスクリプトは：
 
-* Vault の Database secrets engine を有効化
-* PostgreSQL 接続情報（connection\_url）の登録
-* 動的ユーザー作成のための role（myapp）を登録
+   * Vaultから一時ユーザーを発行し
+   * PostgreSQLに接続できることを確認し
+   * TTLを延長し
+   * 最後にそのユーザーを削除します
 
-## 確認用シェルスクリプト
+---
 
-`shell/vault_postgres_ttl_demo.sh` により、以下の一連の動作確認を行うことができます。
+## よくあるエラーと対処
 
-1. Vault に role を登録
-2. Vault から一時的な PostgreSQL 認証情報を取得
-3. PostgreSQL にユーザーが作成されたことを確認
-4. psql を使った接続確認
-5. lease の TTL を延長
-6. lease を revoke し、ユーザーが削除されたことを確認
+* **Vault関連のAPIエラー（https エラー）**
+  → Vault dev モードでは `http://` でアクセスしてください。
 
-## 管理する変数
+* **変数が未定義で失敗する**
+  → `group_vars/all.yml` に以下の3つの変数を定義してください：
 
-以下の変数は `group_vars/all.yml` に定義されています。
+  ```yaml
+  vault_root_token: root
+  postgres_password: your_strong_password
+  name: myapp
+  ```
 
-```
-vault_root_token: root
-postgres_password: your_strong_password
-name: myapp
-```
+---
 
-本番運用では、Ansible Vault などで暗号化することを推奨します。
+## 注意点
 
-## ディレクトリ構成
+* このPlaybookは開発・検証用途向けです。
+* Vaultは `-dev` モードで実行されており、再起動で状態がリセットされます。
+* 本番環境ではTLSや永続ストレージなどの設定が必要です。
 
-```
-vault_postgres_ansible/
-├── inventory.yml
-├── site.yml
-├── group_vars/
-│   └── all.yml
-├── roles/
-│   ├── install_packages/
-│   ├── install_vault/
-│   ├── install_postgresql/
-│   └── setup_vault_database_engine/
-└── shell/
-    └── vault_postgres_ttl_demo.sh
-```
+---
 
-## 注意事項
+## ライセンス
 
-この構成は検証・学習目的を想定しており、Vault は dev モードで起動しています。本番利用の際は、TLS や認証制御の導入を含むセキュリティ対策を別途実施してください。
+MIT License
+
