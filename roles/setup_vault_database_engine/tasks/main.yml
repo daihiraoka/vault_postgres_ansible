@@ -25,8 +25,9 @@
   command: >
     vault write database/roles/{{ name }}
     db_name=postgres
-    creation_statements=CREATE ROLE \"{{ name }}\" WITH LOGIN PASSWORD '{{ postgres_password }}' VALID UNTIL '1h';
+    creation_statements="CREATE ROLE \"{{ name }}\" WITH LOGIN PASSWORD '{{ postgres_password }}' VALID UNTIL '1h';"
     default_ttl=60s
     max_ttl=5m
   environment:
     VAULT_ADDR: "http://127.0.0.1:8200"
+
