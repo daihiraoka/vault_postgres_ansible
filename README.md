@@ -27,14 +27,34 @@ HashiCorp VaultのDatabase Secrets Engineを使って、PostgreSQLに一時的�
 
 ## 使い方
 
-### 1. リポジトリのクローン
+### 1. 事前準備：Ansible のインストール
+
+本Playbookを実行するには、あらかじめAnsibleをインストールしておく必要があります。
+
+Ubuntu の場合は以下のコマンドでインストールできます：
+
+```bash
+sudo apt update
+sudo apt install -y ansible
+````
+
+インストール後、Ansible のバージョン確認をおすすめします：
+
+```bash
+ansible --version
+```
+
+Ansible バージョン 2.10 以上であることを確認してください。
+
+
+### 2. リポジトリのクローン
 
 ```bash
 git clone https://github.com/daihiraoka/vault_postgres_ansible.git
 cd vault_postgres_ansible
 ```
 
-### 2. Ansible Playbook の実行
+### 3. Ansible Playbook の実行
 
 以下のコマンドで自動構成を実行します：
 
@@ -44,7 +64,7 @@ ansible-playbook -i inventory.ini site.yml
 
 構成完了後、Vault と PostgreSQL が起動し、Vault による動的クレデンシャル発行が可能になります。
 
-### 3. 動的クレデンシャルの動作確認（任意）
+### 4. 動的クレデンシャルの動作確認（任意）
 
 `shell/vault_postgres_ttl_demo.sh` を実行することで、以下の動作を確認できます：
 
