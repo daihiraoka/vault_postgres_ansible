@@ -1,4 +1,4 @@
-# Vault + PostgreSQL Dynamic Credentials 自動構成（Ansible）
+# HashiCorp Vault + PostgreSQL Dynamic Credentials 自動構成（Ansible）
 
 このリポジトリは、HashiCorp Vault と PostgreSQL を連携させて、動的にユーザー認証情報を発行・管理する構成を Ansible で自動化するものです。
 
